@@ -23,6 +23,11 @@ import java.io.IOException;
 
 public interface DeviceHost {
     public interface DeviceHostListener {
+       /**
+        * Notifies tag lost. qlg added 2013-01-28
+        */
+        public void onTagLost(TagEndpoint tag);
+
         public void onRemoteEndpointDiscovered(TagEndpoint tag);
 
         /**
@@ -67,6 +72,9 @@ public interface DeviceHost {
     }
 
     public interface TagEndpoint {
+        //qlg added 2013-01-28
+        void SetTagLostCallBack(DeviceHost host);
+
         boolean connect(int technology);
         boolean reconnect();
         boolean disconnect();
@@ -237,4 +245,8 @@ public interface DeviceHost {
     int getDefaultLlcpRwSize();
 
     String dump();
+    /**
+     * Notifies tag lost. qlg added 2013-01-28
+     */
+    public void notifyTagLost(TagEndpoint tag);
 }

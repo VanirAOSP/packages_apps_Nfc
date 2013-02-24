@@ -17,7 +17,7 @@
 package com.android.nfc.dhimpl;
 
 import com.android.nfc.DeviceHost.TagEndpoint;
-
+import com.android.nfc.DeviceHost; //qlg added 2013-01-28
 import android.nfc.FormatException;
 import android.nfc.NdefMessage;
 import android.nfc.tech.IsoDep;
@@ -39,7 +39,7 @@ public class NativeNfcTag implements TagEndpoint {
     static final boolean DBG = true;
 
     static final int STATUS_CODE_TARGET_LOST = 146;
-
+    private DeviceHost mHost; //qlg added 2013-01-28
     private int[] mTechList;
     private int[] mTechHandles;
     private int[] mTechLibNfcTypes;
@@ -67,6 +67,18 @@ public class NativeNfcTag implements TagEndpoint {
     private boolean mIsPresent; // Whether the tag is known to be still present
 
     private PresenceCheckWatchdog mWatchdog;
+
+    //qlg added 2013-01-28
+    private synchronized void doTagLost() {
+        mHost.notifyTagLost(this);
+    }
+
+    //qlg added 2013-01-28
+    @Override
+    public synchronized void SetTagLostCallBack(DeviceHost host) {
+        mHost = host;
+    }
+
     class PresenceCheckWatchdog extends Thread {
 
         private int watchdogTimeout = 125;
@@ -126,6 +138,7 @@ public class NativeNfcTag implements TagEndpoint {
                 }
             }
             mIsPresent = false;
+            doTagLost(); //qlg added 2013-01-28
             // Restart the polling loop
 
             Log.d(TAG, "Tag lost, restarting polling loop");

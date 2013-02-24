@@ -145,6 +145,14 @@ public class NfcDispatcher {
             return intent;
         }
 
+        //qlg added 2013-01-30
+        public Intent setTagLostIntent() {
+            intent.setData(null);
+            intent.setType(null);
+            intent.setAction("android.nfc.action.TAG_LOST");
+            return intent;
+        }
+
         /**
          * Launch the activity via a (single) NFC root task, so that it
          * creates a new task stack instead of interfering with any existing
@@ -219,6 +227,22 @@ public class NfcDispatcher {
         }
 
         dispatch.setTagIntent();
+        if (dispatch.tryStartActivity()) {
+            if (DBG) Log.i(TAG, "matched TAG");
+            return true;
+        }
+
+        if (DBG) Log.i(TAG, "no match");
+        return false;
+    }
+
+    //qlg added 2013-01-30
+    public boolean dispatchTagLost(Tag tag) {
+        DispatchInfo dispatch = new DispatchInfo(mContext, tag, null);
+
+        resumeAppSwitches();
+
+        dispatch.setTagLostIntent();
         if (dispatch.tryStartActivity()) {
             if (DBG) Log.i(TAG, "matched TAG");
             return true;

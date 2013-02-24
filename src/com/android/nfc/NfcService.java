@@ -116,6 +116,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_SE_MIFARE_ACCESS = 12;
     static final int MSG_SE_LISTEN_ACTIVATED = 13;
     static final int MSG_SE_LISTEN_DEACTIVATED = 14;
+    static final int MSG_TAG_LOST = 15; //qlg added 2013-02-22
 
     static final int TASK_ENABLE = 1;
     static final int TASK_DISABLE = 2;
@@ -149,6 +150,7 @@ public class NfcService implements DeviceHostListener {
     public static final int SOUND_START = 0;
     public static final int SOUND_END = 1;
     public static final int SOUND_ERROR = 2;
+    public static final int SOUND_TAGLOST = 3;//qlg added 2013-01-28
 
     public static final String ACTION_RF_FIELD_ON_DETECTED =
         "com.android.nfc_extras.action.RF_FIELD_ON_DETECTED";
@@ -212,6 +214,8 @@ public class NfcService implements DeviceHostListener {
     int mStartSound;
     int mEndSound;
     int mErrorSound;
+    int mTagLostSound; //qlg added 2013-01-28
+
     SoundPool mSoundPool; // playback synchronized on this
     P2pLinkManager mP2pLinkManager;
     TagService mNfcTagService;
@@ -322,6 +326,12 @@ public class NfcService implements DeviceHostListener {
         sendMessage(NfcService.MSG_SE_MIFARE_ACCESS, block);
     }
 
+    //qlg added 2013-01-28
+    @Override
+    public void onTagLost(TagEndpoint tag) {
+        sendMessage(NfcService.MSG_TAG_LOST, tag);
+    }
+
     public NfcService(Application nfcApplication) {
         mNfcTagService = new TagService();
         mNfcAdapter = new NfcAdapterService();
@@ -400,6 +410,7 @@ public class NfcService implements DeviceHostListener {
                 mStartSound = mSoundPool.load(mContext, R.raw.start, 1);
                 mEndSound = mSoundPool.load(mContext, R.raw.end, 1);
                 mErrorSound = mSoundPool.load(mContext, R.raw.error, 1);
+                mTagLostSound = mSoundPool.load(mContext, R.raw.taglost, 1);
             }
         }
     }
@@ -753,6 +764,9 @@ public class NfcService implements DeviceHostListener {
                     break;
                 case SOUND_ERROR:
                     mSoundPool.play(mErrorSound, 1.0f, 1.0f, 0, 0, 1.0f);
+                    break;
+                case SOUND_TAGLOST:
+                    mSoundPool.play(mTagLostSound, 1.0f, 1.0f, 0, 0, 1.0f);
                     break;
             }
         }
@@ -1694,6 +1708,7 @@ public class NfcService implements DeviceHostListener {
                 case MSG_NDEF_TAG:
                     if (DBG) Log.d(TAG, "Tag detected, notifying applications");
                     TagEndpoint tag = (TagEndpoint) msg.obj;
+                    tag.SetTagLostCallBack(mDeviceHost); //qlg added 2013-01-28
                     playSound(SOUND_START);
                     NdefMessage ndefMsg = tag.findAndReadNdef();
 
@@ -1709,6 +1724,13 @@ public class NfcService implements DeviceHostListener {
                             playSound(SOUND_ERROR);
                         }
                     }
+                    break;
+
+                //qlg added 2013-01-28
+                case MSG_TAG_LOST:
+                    if (DBG) Log.d(TAG, "Tag lost message");
+                    TagEndpoint tagLost = (TagEndpoint) msg.obj;
+                    dispatchTagEndpointLost(tagLost);
                     break;
 
                 case MSG_CARD_EMULATION:
@@ -1916,6 +1938,14 @@ public class NfcService implements DeviceHostListener {
             } else {
                 playSound(SOUND_END);
             }
+        }
+
+	private void dispatchTagEndpointLost(TagEndpoint tagEndpoint) {
+            Tag tag = new Tag(tagEndpoint.getUid(), tagEndpoint.getTechList(),
+                    tagEndpoint.getTechExtras(), tagEndpoint.getHandle(), mNfcTagService);
+
+            mNfcDispatcher.dispatchTagLost(tag);
+            playSound(SOUND_TAGLOST);
         }
     }
 

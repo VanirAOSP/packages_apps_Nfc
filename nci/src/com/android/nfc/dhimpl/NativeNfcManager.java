@@ -375,4 +375,10 @@ public class NativeNfcManager implements DeviceHost {
         mListener.onSeMifareAccess(block);
     }
 
+    //qlg added 2013-01-28
+    @Override
+    public void notifyTagLost(TagEndpoint tag) {
+        mListener.onTagLost(tag);
+    }
+
 }
