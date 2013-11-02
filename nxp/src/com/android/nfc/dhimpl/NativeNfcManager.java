@@ -173,23 +173,40 @@ public class NativeNfcManager implements DeviceHost {
     }
 
     @Override
+    public boolean sendRawFrame(byte[] data)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean routeAid(byte[] aid, int route)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean unrouteAid(byte[] aid)
+    {
+       return false;
+    }
+
+    @Override
     public native void enableDiscovery();
 
     @Override
     public native void disableDiscovery();
 
     @Override
-    public native void enableCE_A();
+    public void enableRoutingToHost()
+    {
+
+    }
 
     @Override
-    public native void disableCE_A();
+    public void disableRoutingToHost()
+    {
 
-    @Override
-    public native void enableCE_B();
-
-    @Override
-    public native void disableCE_B();
-
+    }
 
     @Override
     public native int[] doGetSecureElementList();
@@ -347,6 +364,18 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public void setP2pTargetModes(int modes) {
         doSetP2pTargetModes(modes);
+    }
+
+    private native void doEnableReaderMode(int technologies);
+    public boolean enableReaderMode(int technologies) {
+        doEnableReaderMode(technologies);
+        return true;
+    }
+
+    private native void doDisableReaderMode();
+    public boolean disableReaderMode() {
+        doDisableReaderMode();
+        return true;
     }
 
     @Override

@@ -21,6 +21,7 @@
 #pragma once
 #include "SyncEvent.h"
 #include "NfcJniUtil.h"
+#include <vector>
 extern "C"
 {
     #include "nfa_rw_api.h"
@@ -31,7 +32,7 @@ class NfcTag
 {
 public:
     enum ActivationState {Idle, Sleep, Active};
-    static const int MAX_NUM_TECHNOLOGY = 10; //max number of technologies supported by one or more tags
+    static const int MAX_NUM_TECHNOLOGY = 11; //max number of technologies supported by one or more tags
     int mTechList [MAX_NUM_TECHNOLOGY]; //array of NFC technologies according to NFC service
     int mTechHandles [MAX_NUM_TECHNOLOGY]; //array of tag handles according to NFC service
     int mTechLibNfcTypes [MAX_NUM_TECHNOLOGY]; //array of detailed tag types according to NFC service
@@ -97,6 +98,18 @@ public:
     **
     *******************************************************************************/
     void connectionEventHandler (UINT8 event, tNFA_CONN_EVT_DATA* data);
+
+
+    /*******************************************************************************
+    **
+    ** Function:        isActivated
+    **
+    ** Description:     Is tag activated?
+    **
+    ** Returns:         True if tag is activated.
+    **
+    *******************************************************************************/
+    bool isActivated ();
 
 
     /*******************************************************************************
@@ -233,8 +246,62 @@ public:
     *******************************************************************************/
     bool isNdefDetectionTimedOut ();
 
+
+    /*******************************************************************************
+    **
+    ** Function         setActive
+    **
+    ** Description      Sets the active state for the object
+    **
+    ** Returns          None.
+    **
+    *******************************************************************************/
+    void setActive(bool active);
+
+
+    /*******************************************************************************
+    **
+    ** Function:        resetAllTransceiveTimeouts
+    **
+    ** Description:     Reset all timeouts for all technologies to default values.
+    **
+    ** Returns:         none
+    **
+    *******************************************************************************/
+    void resetAllTransceiveTimeouts ();
+
+
+    /*******************************************************************************
+    **
+    ** Function:        getTransceiveTimeout
+    **
+    ** Description:     Get the timeout value for one technology.
+    **                  techId: one of the values in TARGET_TYPE_* defined in NfcJniUtil.h
+    **
+    ** Returns:         Timeout value in millisecond.
+    **
+    *******************************************************************************/
+    int getTransceiveTimeout (int techId);
+
+
+    /*******************************************************************************
+    **
+    ** Function:        setTransceiveTimeout
+    **
+    ** Description:     Set the timeout value for one technology.
+    **                  techId: one of the values in TARGET_TYPE_* defined in NfcJniUtil.h
+    **                  timeout: timeout value in millisecond.
+    **
+    ** Returns:         Timeout value.
+    **
+    *******************************************************************************/
+    void setTransceiveTimeout (int techId, int timeout);
+
+
 private:
+    std::vector<int> mTechnologyTimeoutsTable;
     nfc_jni_native_data* mNativeData;
+    bool mIsActivated;
     ActivationState mActivationState;
     tNFC_PROTOCOL mProtocol;
     int mtT1tMaxMessageSize; //T1T max NDEF message size

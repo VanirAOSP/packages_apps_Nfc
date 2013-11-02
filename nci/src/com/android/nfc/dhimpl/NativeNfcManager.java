@@ -16,9 +16,6 @@
 
 package com.android.nfc.dhimpl;
 
-import com.android.nfc.DeviceHost;
-import com.android.nfc.LlcpException;
-
 import android.annotation.SdkConstant;
 import android.annotation.SdkConstant.SdkConstantType;
 import android.content.Context;
@@ -27,6 +24,9 @@ import android.nfc.ErrorCodes;
 import android.nfc.tech.Ndef;
 import android.nfc.tech.TagTechnology;
 import android.util.Log;
+
+import com.android.nfc.DeviceHost;
+import com.android.nfc.LlcpException;
 
 /**
  * Native interface to the NFC Manager functions
@@ -79,6 +79,7 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public void checkFirmware() {
+        doDownload();
     }
 
     private native boolean doInitialize();
@@ -118,22 +119,25 @@ public class NativeNfcManager implements DeviceHost {
     }
 
     @Override
+    public native boolean sendRawFrame(byte[] data);
+
+    @Override
+    public native boolean routeAid(byte[] aid, int route);
+
+    @Override
+    public native boolean unrouteAid(byte[] aid);
+
+    @Override
     public native void enableDiscovery();
 
     @Override
     public native void disableDiscovery();
 
     @Override
-    public void enableCE_A() { Log.e(TAG, "NFC Host Emulation not supported with NCI adapters"); return; };
+    public native void enableRoutingToHost();
 
     @Override
-    public void disableCE_A() { Log.e(TAG, "NFC Host Emulation not supported with NCI adapters"); return; };
-
-    @Override
-    public void enableCE_B() { Log.e(TAG, "NFC Host Emulation not supported with NCI adapters"); return; };
-
-    @Override
-    public void disableCE_B() { Log.e(TAG, "NFC Host Emulation not supported with NCI adapters"); return; };
+    public native void disableRoutingToHost();
 
     @Override
     public native int[] doGetSecureElementList();
@@ -292,6 +296,7 @@ public class NativeNfcManager implements DeviceHost {
     public void setP2pTargetModes(int modes) {
         doSetP2pTargetModes(modes);
     }
+
     @Override
     public boolean getExtendedLengthApdusSupported() {
         // TODO check BCM support
@@ -322,6 +327,20 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public String dump() {
         return doDump();
+    }
+
+    private native void doEnableReaderMode(int technologies);
+    @Override
+    public boolean enableReaderMode(int technologies) {
+        doEnableReaderMode(technologies);
+        return true;
+    }
+
+    private native void doDisableReaderMode();
+    @Override
+    public boolean disableReaderMode() {
+        doDisableReaderMode();
+        return true;
     }
 
     /**
@@ -392,6 +411,18 @@ public class NativeNfcManager implements DeviceHost {
 
     private void notifySeMifareAccess(byte[] block) {
         mListener.onSeMifareAccess(block);
+    }
+
+    private void notifyHostEmuActivated() {
+        mListener.onHostCardEmulationActivated();
+    }
+
+    private void notifyHostEmuData(byte[] data) {
+        mListener.onHostCardEmulationData(data);
+    }
+
+    private void notifyHostEmuDeactivated() {
+        mListener.onHostCardEmulationDeactivated();
     }
 
 }
