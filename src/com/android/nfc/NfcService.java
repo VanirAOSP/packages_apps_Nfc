@@ -42,7 +42,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.database.ContentObserver;
 import android.content.res.Resources.NotFoundException;
 import android.media.AudioManager;
 import android.media.SoundPool;
@@ -158,7 +157,7 @@ public class NfcService implements DeviceHostListener {
     static final int EE_ERROR_NFC_DISABLED = -6;
 
     /** minimum screen state that enables NFC polling (discovery) */
-    static int POLLING_MODE = SCREEN_STATE_ON_UNLOCKED;
+    static final int POLLING_MODE = SCREEN_STATE_ON_UNLOCKED;
 
     // Time to wait for NFC controller to initialize before watchdog
     // goes off. This time is chosen large, because firmware download
@@ -532,8 +531,6 @@ public class NfcService implements DeviceHostListener {
         }
 
         new EnableDisableTask().execute(TASK_BOOT);  // do blocking boot tasks
-
-        SettingsObserver mSettingsObserver = new SettingsObserver(new Handler());
     }
 
     void initSoundPool() {
@@ -1040,39 +1037,6 @@ public class NfcService implements DeviceHostListener {
             }
 
             mNfcDispatcher.setForegroundDispatch(intent, filters, techLists);
-
-            //check for PCD A or PCD B technology
-            //turn on if in list
-            //turn off if not
-            boolean PCD_A = false;
-            boolean PCD_B = false;
-            if(techLists!=null)
-            {
-              for(short j=0;j<techLists.length;j++)
-              {
-                if(techLists[j]!=null)
-                {
-                  for(short k=0;k<techLists[j].length;k++)
-                  {
-                    if(techLists[j][k]!=null)
-                    {
-                      if(techLists[j][k].equals("android.nfc.tech.IsoPcdA"))
-                        PCD_A = true;
-                      if(techLists[j][k].equals("android.nfc.tech.IsoPcdB"))
-                        PCD_B = true;
-                    }
-                  }
-                }
-              }
-            }
-            if(PCD_A)
-              mDeviceHost.enableCE_A();
-            else
-              mDeviceHost.disableCE_A();
-            if(PCD_B)
-              mDeviceHost.enableCE_B();
-            else
-              mDeviceHost.disableCE_B();
         }
 
         @Override
@@ -2597,29 +2561,6 @@ public class NfcService implements DeviceHostListener {
             mNfcDispatcher.dump(fd, pw, args);
             pw.println(mDeviceHost.dump());
 
-        }
-    }
-
-    protected class SettingsObserver extends ContentObserver {
-        ContentResolver resolver;
-        SettingsObserver(Handler handler) {
-            super(handler);
-            resolver = mContext.getContentResolver();
-            observe();
-        }
-
-        void observe() {
-            resolver.registerContentObserver(Settings.System
-                    .getUriFor(Settings.System.NFC_POLLING_MODE),
-                    false, this);
-            POLLING_MODE = Settings.System.getInt(resolver,
-                    Settings.System.NFC_POLLING_MODE, SCREEN_STATE_ON_UNLOCKED);
-        }
-
-        @Override
-        public void onChange(boolean selfChange) {
-            POLLING_MODE = Settings.System.getInt(resolver,
-                    Settings.System.NFC_POLLING_MODE, SCREEN_STATE_ON_UNLOCKED);
         }
     }
 }
